@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord Text Cleaner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 1200px;
+            padding: 40px;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .text-areas {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .text-areas {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .text-area-wrapper {
+            position: relative;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #444;
+        }
+
+        textarea {
+            width: 100%;
+            height: 400px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-container {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .process-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .process-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .clear-btn {
+            background: #f5f5f5;
+            color: #666;
+        }
+
+        .clear-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .copy-btn, .save-btn {
+            position: absolute;
+            top: 35px;
+            padding: 8px 16px;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .copy-btn {
+            right: 10px;
+            background: #4CAF50;
+        }
+
+        .copy-btn:hover {
+            background: #45a049;
+        }
+
+        .save-btn {
+            right: 90px;
+            background: #2196F3;
+        }
+
+        .save-btn:hover {
+            background: #1976D2;
+        }
+
+        .stats {
+            background: #f8f8f8;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            color: #666;
+        }
+
+        .stats span {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .tooltip {
+            position: absolute;
+            background: #333;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .tooltip.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Discord Text Cleaner</h1>
+        <p class="subtitle">Remove attachments and CDN links from Discord conversations</p>
+        <div style="background: #e8f4f8; padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #2196F3;">
+            <p style="color: #1976D2; margin: 0; font-size: 14px;">
+                <strong>📋 For logs exported with <a href="https://github.com/Tyrrrz/DiscordChatExporter" target="_blank" style="color: #1976D2;">DiscordChatExporter</a></strong><br>
+                <span style="color: #555; font-size: 13px;">This tool cleans up text exports by removing {Attachments} markers and CDN attachment links</span>
+            </p>
+        </div>
+        
+        <div class="text-areas">
+            <div class="text-area-wrapper">
+                <label for="input">Paste your Discord text here:</label>
+                <textarea id="input" placeholder="Paste your Discord conversation text here..."></textarea>
+            </div>
+            
+            <div class="text-area-wrapper">
+                <label for="output">Cleaned text:</label>
+                <textarea id="output" placeholder="Cleaned text will appear here..." readonly></textarea>
+                <button class="save-btn" onclick="saveOutput()">💾 Save</button>
+                <button class="copy-btn" onclick="copyOutput()">📋 Copy</button>
+            </div>
+        </div>
+        
+        <div class="button-container">
+            <button class="process-btn" onclick="processText()">
+                ✨ Clean Text
+            </button>
+            <button class="clear-btn" onclick="clearAll()">
+                🗑️ Clear All
+            </button>
+        </div>
+        
+        <div class="stats" id="stats">
+            Ready to clean your Discord text
+        </div>
+    </div>
+
+    <div class="tooltip" id="tooltip">Copied!</div>
+
+    <script>
+        function processText() {
+            const input = document.getElementById('input').value;
+            if (!input) {
+                showStats('Please paste some text to process');
+                return;
+            }
+            
+            // Split into lines
+            let lines = input.split('\n');
+            const originalLineCount = lines.length;
+            
+            // Process the lines
+            let cleanedLines = [];
+            let removedCount = 0;
+            
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                const trimmedLine = line.trim();
+                
+                // Check if this line should be removed
+                if (trimmedLine === '{Attachments}' || 
+                    trimmedLine.startsWith('https://cdn.discordapp.com/attachments/')) {
+                    removedCount++;
+                    
+                    // Also check if the previous line is blank and remove it
+                    if (cleanedLines.length > 0 && cleanedLines[cleanedLines.length - 1] === '') {
+                        cleanedLines.pop();
+                        removedCount++;
+                    }
+                    
+                    continue;
+                }
+                
+                cleanedLines.push(line);
+            }
+            
+            // Join the cleaned lines
+            const output = cleanedLines.join('\n');
+            document.getElementById('output').value = output;
+            
+            // Update stats
+            showStats(`Processed! Removed <span>${removedCount}</span> lines from <span>${originalLineCount}</span> total lines`);
+        }
+        
+        function clearAll() {
+            document.getElementById('input').value = '';
+            document.getElementById('output').value = '';
+            showStats('Ready to clean your Discord text');
+        }
+        
+        function copyOutput() {
+            const output = document.getElementById('output');
+            if (!output.value) {
+                showStats('No cleaned text to copy');
+                return;
+            }
+            
+            output.select();
+            document.execCommand('copy');
+            
+            // Show tooltip
+            const tooltip = document.getElementById('tooltip');
+            const copyBtn = document.querySelector('.copy-btn');
+            const rect = copyBtn.getBoundingClientRect();
+            
+            tooltip.style.left = rect.left + 'px';
+            tooltip.style.top = (rect.top - 30) + 'px';
+            tooltip.classList.add('show');
+            
+            setTimeout(() => {
+                tooltip.classList.remove('show');
+            }, 2000);
+        }
+        
+        function saveOutput() {
+            const output = document.getElementById('output').value;
+            if (!output) {
+                showStats('No cleaned text to save');
+                return;
+            }
+            
+            // Extract channel name and date range from the text
+            let channelName = 'discord_export';
+            let dateRange = '';
+            
+            const lines = output.split('\n');
+            
+            // Look for channel name in the header section
+            for (let i = 0; i < Math.min(lines.length, 20); i++) {
+                const line = lines[i];
+                // Look for "Channel: category / channel_name" format
+                if (line.includes('Channel:')) {
+                    const match = line.match(/Channel:\s*(?:.*?\/\s*)?(.+?)(?:\s*$)/);
+                    if (match) {
+                        channelName = match[1].trim().replace(/[#\s]/g, '_').replace(/[^a-zA-Z0-9_-]/g, '');
+                    }
+                    break;
+                }
+            }
+            
+            // Extract date range by finding first and last dates in format [M/D/YYYY H:MM AM/PM]
+            const datePattern = /\[(\d{1,2})\/(\d{1,2})\/(\d{4})\s+\d{1,2}:\d{2}\s+[AP]M\]/g;
+            const dates = [];
+            
+            for (const line of lines) {
+                const matches = line.matchAll(datePattern);
+                for (const match of matches) {
+                    const month = match[1].padStart(2, '0');
+                    const day = match[2].padStart(2, '0');
+                    const year = match[3];
+                    dates.push(`${year}-${month}-${day}`);
+                }
+            }
+            
+            // Remove duplicates and sort dates
+            const uniqueDates = [...new Set(dates)].sort();
+            
+            if (uniqueDates.length > 0) {
+                const firstDate = uniqueDates[0];
+                const lastDate = uniqueDates[uniqueDates.length - 1];
+                
+                if (firstDate === lastDate) {
+                    dateRange = `_${firstDate}`;
+                } else {
+                    dateRange = `_${firstDate}_to_${lastDate}`;
+                }
+            }
+            
+            // Create filename
+            const filename = `${channelName}${dateRange}.txt`;
+            
+            // Create a blob with the text content
+            const blob = new Blob([output], { type: 'text/plain' });
+            
+            // Create a download link
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            
+            // Trigger download
+            document.body.appendChild(a);
+            a.click();
+            
+            // Cleanup
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            
+            showStats(`File saved as ${filename}`);
+        }
+        
+        function showStats(message) {
+            document.getElementById('stats').innerHTML = message;
+        }
+        
+        // Auto-process on paste
+        document.getElementById('input').addEventListener('paste', function(e) {
+            setTimeout(() => {
+                processText();
+            }, 100);
+        });
+    </script>
+</body>
+</html>
